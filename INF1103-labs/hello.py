@@ -2,7 +2,7 @@
 #Lab 1, Activity 4 INF1103
 
 username = input("Enter Username  :")
-age = input("Enter Age  :")
+age = int(input("Enter Age  :"))
 category = input("Enter Content Category  :")
 
 print("\nInstagram Profile")
@@ -11,9 +11,5 @@ print("Username: ", username)
 print("Age: ", age)
 print("Category: ", category)
 
-#a) input() captures the user's input into a variable.
-#b) the program is now dynamic as it changes based on the user's input.
-
-print(type(username))
-print(type(age))
-print(type(category))
+if age>40 and category == "fun":
+    print("You are old what is fun for you??")
