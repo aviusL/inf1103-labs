@@ -1,19 +1,19 @@
 
+#Lab 1, Activity 4 INF1103
+
+username = input("Enter Username  :")
+age = input("Enter Age  :")
+category = input("Enter Content Category  :")
+
+print("\nInstagram Profile")
 print("======================")
-print("Welcome here")
-print("My first post!")
-print("======================")
+print("Username: ", username)
+print("Age: ", age)
+print("Category: ", category)
 
-username = "cool_creator"
-bio = "Fun  Blogger"
-followers = 100
+#a) input() captures the user's input into a variable.
+#b) the program is now dynamic as it changes based on the user's input.
 
-print("Username:", username)
-print("Bio: ", bio)
-
-followers += 50
-print("Day 1: ", followers)
-followers += 20
-print("Day 2: ", followers)
-followers -= 10
-print("Day 3: ", followers)
+print(type(username))
+print(type(age))
+print(type(category))
