@@ -1,23 +1,13 @@
 
-
 def get_valid_input():
-    """Handles prompt and input validation.
-    Returns:
-        int: a valid input quantity, or
-        str: 'quit' to end input, or
-        None: if input is invalid.
-    """
+    """Handles user input and returns an integer or 'quit' signal."""
     user_input = input("Enter a stock quantity, or quit: ")
-
+    
     if user_input.lower() == "quit":
         return "quit"
-
+    
     try:
-        cleaned = int(user_input)
-        if cleaned <= 0:
-            print("Inventory cannot be zero or a negative number.")
-            return None
-        return cleaned
+        return int(user_input)
     except ValueError:
         print("Invalid Input!")
         return None
@@ -29,7 +19,7 @@ def calculate_tax(amount):
 
 
 def process_delivery(current_total, new_value):
-    """Updates and returns the total inventory count after adding the delivery."""
+    """Updates total stock and displays delivery tax details."""
     new_total = current_total + new_value
     tax = calculate_tax(new_value)
     
@@ -39,10 +29,9 @@ def process_delivery(current_total, new_value):
 
 
 def generate_report(total_units, failed_attempts):
-    """Prints the final summary report."""
-    print("\n--- Summary Report ---")
-    print(f"Total Deliveries Processed: {total_units}")
-    print(f"Number of Failed/Rejected Entries: {failed_attempts}")
+    """Prints final summary (Stub)."""
+    # TODO: Expand reporting formatting and validation rules in Commit 3
+    print(f"Total: {total_units}, Failed: {failed_attempts}")
 
 
 def main():
@@ -50,28 +39,16 @@ def main():
     failed_count = 0
 
     while True:
-        user_choice = get_valid_input()
+        choice = get_valid_input()
 
-        if user_choice == "quit":
+        if choice == "quit":
             generate_report(inventory, failed_count)
             break
-        elif user_choice is None:
+        elif choice is None:
             failed_count += 1
         else:
-            if (inventory + user_choice) >= 500:
-                print("ALERT! Maximum capacity reached or exceeded.")
-                failed_count += 1
-                generate_report(inventory, failed_count)
-                break
-            else:
-                inventory = process_delivery(inventory, user_choice)
+            inventory = process_delivery(inventory, choice)
 
 
 if __name__ == "__main__":
     main()
-
-
-
-    
-
-
