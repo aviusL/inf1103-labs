@@ -1,25 +1,11 @@
 
-def get_valid_input():
-    """Handles user input and returns an integer or 'quit' signal."""
-    user_input = input("Enter a stock quantity, or quit: ")
-    
-    if user_input.lower() == "quit":
-        return "quit"
-    
-    try:
-        return int(user_input)
-    except ValueError:
-        print("Invalid Input!")
-        return None
-
-
 def calculate_tax(amount):
-    """Calculates 10% tax for a single delivery."""
+    """Calculates 10% tax for a single delivery amount."""
     return amount * 0.10
 
 
 def process_delivery(current_total, new_value):
-    """Updates total stock and displays delivery tax details."""
+    """Updates and returns total stock while computing and displaying tax details."""
     new_total = current_total + new_value
     tax = calculate_tax(new_value)
     
@@ -28,10 +14,34 @@ def process_delivery(current_total, new_value):
     return new_total
 
 
+def get_valid_input():
+    """Handles prompt and input validation.
+    
+    Returns:
+        int: A valid stock quantity (> 0), or
+        str: 'quit' signal, or
+        None: If input is invalid/negative.
+    """
+    user_input = input("Enter a stock quantity, or quit  :")
+    
+    if user_input.strip().lower() == "quit":
+        return "quit"
+    
+    try:
+        cleaned_input = int(user_input)
+        if cleaned_input < 1:
+            print("Inventory cannot be a negative number.")
+            return None
+        return cleaned_input
+    except ValueError:
+        print("Invalid Input!")
+        return None
+
+
 def generate_report(total_units, failed_attempts):
-    """Prints final summary report matching assignment requirements."""
-    print(f"Total Deliveries Processed: {total_units}")
-    print(f"Number of Failed/Rejected Entries: {failed_attempts}")
+    """Prints the final audit summary report."""
+    print(f"Total Deliveries Processed :{total_units}")
+    print(f"Number of Failed/Rejected Entries :{failed_attempts}")
 
 
 def main():
@@ -47,10 +57,7 @@ def main():
         elif choice is None:
             failed_count += 1
         else:
-            if choice < 1:
-                print("Inventory cannot be a negative number.")
-                failed_count += 1
-            elif (inventory + choice) >= 500:
+            if (inventory + choice) >= 500:
                 print("ALERT!")
                 failed_count += 1
                 generate_report(inventory, failed_count)
