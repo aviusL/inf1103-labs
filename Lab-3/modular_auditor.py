@@ -29,9 +29,9 @@ def process_delivery(current_total, new_value):
 
 
 def generate_report(total_units, failed_attempts):
-    """Prints final summary (Stub)."""
-    # TODO: Expand reporting formatting and validation rules in Commit 3
-    print(f"Total: {total_units}, Failed: {failed_attempts}")
+    """Prints final summary report matching assignment requirements."""
+    print(f"Total Deliveries Processed: {total_units}")
+    print(f"Number of Failed/Rejected Entries: {failed_attempts}")
 
 
 def main():
@@ -47,7 +47,16 @@ def main():
         elif choice is None:
             failed_count += 1
         else:
-            inventory = process_delivery(inventory, choice)
+            if choice < 1:
+                print("Inventory cannot be a negative number.")
+                failed_count += 1
+            elif (inventory + choice) >= 500:
+                print("ALERT!")
+                failed_count += 1
+                generate_report(inventory, failed_count)
+                break
+            else:
+                inventory = process_delivery(inventory, choice)
 
 
 if __name__ == "__main__":
