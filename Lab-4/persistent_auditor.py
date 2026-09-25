@@ -1,14 +1,12 @@
-
 import os
 
-
 def calculate_tax(amount):
-    """Calculates 10% tax for a single delivery amount."""
+    # Calculate 10% tax on the delivery amount
     return amount * 0.10
 
 
 def process_delivery(current_total, new_value):
-    """Updates and returns total stock while computing and displaying tax details."""
+    # Update running total and calculate tax for the current item
     new_total = current_total + new_value
     tax = calculate_tax(new_value)
 
@@ -18,11 +16,7 @@ def process_delivery(current_total, new_value):
 
 
 def load_inventory(filename="inventory.txt"):
-    """Reads existing inventory total and transaction history from file.
-    
-    Returns:
-        tuple: (int total_inventory, list transaction_history)
-    """
+    # Load inventory count and past transaction history if the file exists
     if not os.path.exists(filename):
         print("No prior inventory record found. Starting fresh inventory.")
         return 0, []
@@ -40,13 +34,13 @@ def load_inventory(filename="inventory.txt"):
                 
             print(f"Loaded existing inventory: {total_inventory} units across {len(history)} past transactions.")
             return total_inventory, history
-    except (ValueError, IOError) as e:
-        print(f"Warning: Could not parse inventory file ({e}). Starting with default state.")
+    except (ValueError, IOError):
+        print("Warning: Could not load inventory file properly. Starting fresh.")
         return 0, []
 
 
 def save_inventory(total, history, filename="inventory.txt"):
-    """Saves the final inventory total and transaction history list to file."""
+    # Save the updated inventory total and history list back to file
     try:
         with open(filename, "w") as file:
             file.write(f"{total}\n")
@@ -57,7 +51,6 @@ def save_inventory(total, history, filename="inventory.txt"):
 
 
 def get_valid_input():
-    """Handles prompt and input validation."""
     user_input = input("Enter a stock quantity, or quit  :")
 
     if user_input.strip().lower() == "quit":
@@ -65,7 +58,10 @@ def get_valid_input():
 
     try:
         cleaned_input = int(user_input)
-        if cleaned_input < 1:
+        if cleaned_input == 0:
+            print("Quantity must be greater than zero.")
+            return None
+        elif cleaned_input < 0:
             print("Inventory cannot be a negative number.")
             return None
         return cleaned_input
@@ -75,7 +71,7 @@ def get_valid_input():
 
 
 def generate_report(total_units, failed_attempts, history):
-    """Prints the final audit summary report."""
+    # Print final audit summary
     print("\n--- FINAL AUDIT SUMMARY ---")
     print(f"Total Inventory Units            :{total_units}")
     print(f"Total Transactions Recorded      :{len(history)}")
