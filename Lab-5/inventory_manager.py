@@ -2,7 +2,7 @@
 import json
 import os
 
-# Dynamically set FILENAME relative to this script's folder location
+# Set FILENAME relative to this script's folder location
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FILENAME = os.path.join(BASE_DIR, "inventory.json")
 
@@ -14,13 +14,18 @@ DEFAULT_INVENTORY = [
 
 
 def load_inventory(filename=FILENAME):
-    """Load inventory from JSON file if available; otherwise return default inventory."""
+    """Load inventory from JSON file; sanitize negative stock/price values if present."""
     if os.path.exists(filename):
         try:
             with open(filename, "r") as file:
                 data = json.load(file)
-                print(f"{filename} found.")
-                print("Inventory loaded successfully.")
+                # Sanitize loaded data against negative values
+                for item in data:
+                    if item.get("stock", 0) < 0:
+                        item["stock"] = 0
+                    if item.get("price", 0) <= 0:
+                        item["price"] = 1.00
+                print(f"{filename} found and loaded successfully.")
                 return data
         except (json.JSONDecodeError, IOError):
             print("Error loading inventory file. Starting with default products.")
@@ -54,22 +59,45 @@ def display_all(inventory):
 
 
 def add_product(inventory):
-    """Prompt user to add a new product dictionary to inventory."""
+    """Prompt user to add a new product dictionary with persistent validation loops."""
     print("\nAdd New Product")
-    prod_id = input("Product ID: ").strip()
+    
+    while True:
+        prod_id = input("Product ID: ").strip()
+        if not prod_id:
+            print("Error: Product ID cannot be empty! Please try again.")
+            continue
+        if any(item["id"].lower() == prod_id.lower() for item in inventory):
+            print("Error: Product ID already exists! Please enter a unique ID.")
+            continue
+        break
 
-    for item in inventory:
-        if item["id"].lower() == prod_id.lower():
-            print("Error: Product ID already exists!")
-            return
+    while True:
+        name = input("Product Name: ").strip()
+        if not name:
+            print("Error: Product Name cannot be empty! Please try again.")
+            continue
+        break
 
-    name = input("Product Name: ").strip()
-    try:
-        price = float(input("Price: "))
-        stock = int(input("Stock Quantity: "))
-    except ValueError:
-        print("Invalid numerical input for price or stock quantity.")
-        return
+    while True:
+        try:
+            price = float(input("Price: "))
+            if price <= 0:
+                print("Error: Price must be a positive number greater than zero!")
+                continue
+            break
+        except ValueError:
+            print("Error: Invalid price. Please enter a valid decimal number.")
+
+    while True:
+        try:
+            stock = int(input("Stock Quantity: "))
+            if stock < 0:
+                print("Error: Stock quantity cannot be negative!")
+                continue
+            break
+        except ValueError:
+            print("Error: Invalid stock. Please enter a whole non-negative integer.")
 
     new_item = {
         "id": prod_id,
@@ -82,7 +110,7 @@ def add_product(inventory):
 
 
 def update_stock(inventory):
-    """Search by ID and update stock quantity for an existing product."""
+    """Search by ID and update stock quantity for an existing product with validation loop."""
     print("\nUpdate Stock")
     prod_id = input("Enter Product ID: ").strip()
 
@@ -91,13 +119,18 @@ def update_stock(inventory):
             print("\nProduct Found:")
             print(f"Name: {item['name']}")
             print(f"Current Stock: {item['stock']}")
-            try:
-                new_stock = int(input("\nNew Stock Quantity: "))
-                item["stock"] = new_stock
-                print("\nStock updated successfully!")
-            except ValueError:
-                print("Invalid quantity entered.")
-            return
+            
+            while True:
+                try:
+                    new_stock = int(input("\nNew Stock Quantity: "))
+                    if new_stock < 0:
+                        print("Error: Stock quantity cannot be negative! Please try again.")
+                        continue
+                    item["stock"] = new_stock
+                    print("\nStock updated successfully!")
+                    return
+                except ValueError:
+                    print("Error: Stock quantity must be a valid whole non-negative integer!")
 
     print("Product not found.")
 
