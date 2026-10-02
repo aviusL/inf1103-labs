@@ -39,8 +39,88 @@ def save_inventory(inventory, filename=FILENAME):
         print(f"Error saving inventory: {e}")
 
 
+def display_all(inventory):
+    """Display all products formatted as ID | Name | Price | Stock."""
+    print("\nCurrent Inventory")
+    print("----------------------------------------")
+    if not inventory:
+        print("No products available.")
+    else:
+        for item in inventory:
+            print(f"ID: {item['id']} | Name: {item['name']} | Price: ${item['price']:.2f} | Stock: {item['stock']}")
+    print("----------------------------------------")
+
+
+def add_product(inventory):
+    """Prompt user to add a new product dictionary to inventory."""
+    print("\nAdd New Product")
+    prod_id = input("Product ID: ").strip()
+
+    for item in inventory:
+        if item["id"].lower() == prod_id.lower():
+            print("Error: Product ID already exists!")
+            return
+
+    name = input("Product Name: ").strip()
+    try:
+        price = float(input("Price: "))
+        stock = int(input("Stock Quantity: "))
+    except ValueError:
+        print("Invalid numerical input for price or stock quantity.")
+        return
+
+    new_item = {
+        "id": prod_id,
+        "name": name,
+        "price": price,
+        "stock": stock
+    }
+    inventory.append(new_item)
+    print("\nProduct added successfully!")
+
+
+def update_stock(inventory):
+    """Search by ID and update stock quantity for an existing product."""
+    print("\nUpdate Stock")
+    prod_id = input("Enter Product ID: ").strip()
+
+    for item in inventory:
+        if item["id"].lower() == prod_id.lower():
+            print("\nProduct Found:")
+            print(f"Name: {item['name']}")
+            print(f"Current Stock: {item['stock']}")
+            try:
+                new_stock = int(input("\nNew Stock Quantity: "))
+                item["stock"] = new_stock
+                print("\nStock updated successfully!")
+            except ValueError:
+                print("Invalid quantity entered.")
+            return
+
+    print("Product not found.")
+
+
+def search_product(inventory):
+    """Search for a product by its ID and display its full details."""
+    print("\nSearch Product")
+    prod_id = input("Enter Product ID: ").strip()
+
+    for item in inventory:
+        if item["id"].lower() == prod_id.lower():
+            print("\nProduct Found")
+            print("----------------------------------------")
+            print(f"ID: {item['id']}")
+            print(f"Name: {item['name']}")
+            print(f"Price: ${item['price']:.2f}")
+            print(f"Stock: {item['stock']}")
+            print("----------------------------------------")
+            return
+
+    print("\nProduct not found.")
+
+
 def print_menu():
-    """Display the system menu options."""
+    """Display the main system menu."""
     print("\n---------- MENU ----------")
     print("1. Display All Products")
     print("2. Add Product")
@@ -49,26 +129,6 @@ def print_menu():
     print("5. Save Inventory")
     print("6. Exit")
     print("--------------------------")
-
-
-def display_all(inventory):
-    """Placeholder for displaying products."""
-    print("\n[Feature pending] Displaying products...")
-
-
-def add_product(inventory):
-    """Placeholder for adding a product."""
-    print("\n[Feature pending] Add product functionality...")
-
-
-def update_stock(inventory):
-    """Placeholder for updating stock."""
-    print("\n[Feature pending] Update stock functionality...")
-
-
-def search_product(inventory):
-    """Placeholder for searching products."""
-    print("\n[Feature pending] Search product functionality...")
 
 
 def main():
