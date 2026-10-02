@@ -2,7 +2,9 @@
 import json
 import os
 
-FILENAME = "inventory.json"
+# Dynamically set FILENAME relative to this script's folder location
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FILENAME = os.path.join(BASE_DIR, "inventory.json")
 
 DEFAULT_INVENTORY = [
     {"id": "P001", "name": "Laptop", "price": 1200.00, "stock": 15},
