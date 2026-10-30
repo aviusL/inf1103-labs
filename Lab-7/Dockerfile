@@ -5,6 +5,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
-COPY product.py inventory.py inventory_manager.py ./
+COPY *.py ./
 
 CMD ["python", "inventory_manager.py"]

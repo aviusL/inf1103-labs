@@ -1,22 +1,38 @@
 import json
 import os
 
-from product import Product
+from physical_product import PhysicalProduct
+from digital_product import DigitalProduct
+from can_be_shipped import CanBeShipped
 from inventory import Inventory
 
 #inventory.json lives next to this script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FILENAME = os.path.join(BASE_DIR, "inventory.json")
 
+#weight given to older records that were saved before product types existed
+DEFAULT_WEIGHT = 1.0
+
 
 #file handling
 
 def create_default_inventory():
     inventory = Inventory()
-    inventory.add_product(Product("P001", "Laptop", 1200.00, 15))
-    inventory.add_product(Product("P002", "Mouse", 25.50, 40))
-    inventory.add_product(Product("P003", "Keyboard", 45.00, 25))
+    inventory.add_product(PhysicalProduct("P001", "Laptop", 1200.00, 15, 2.0))
+    inventory.add_product(PhysicalProduct("P002", "Mouse", 25.50, 40, 0.1))
+    inventory.add_product(PhysicalProduct("P003", "Keyboard", 45.00, 25, 0.8))
+    inventory.add_product(DigitalProduct("P004", "Photo Editor", 89.90, 200, 1250.0))
     return inventory
+
+
+def create_product_from_dict(item, price, stock):
+    #uses the saved "type" to rebuild the right subclass, records without a type load as physical
+    product_type = item.get("type", "physical")
+    if product_type == "physical":
+        return PhysicalProduct(item["id"], item["name"], price, stock, item.get("weight", DEFAULT_WEIGHT))
+    if product_type == "digital":
+        return DigitalProduct(item["id"], item["name"], price, stock, item["download_size"])
+    raise ValueError(f"Unknown product type '{product_type}'.")
 
 
 def load_inventory(filename=FILENAME):
@@ -43,7 +59,7 @@ def load_inventory(filename=FILENAME):
                 stock = 0
             if isinstance(price, (int, float)) and price <= 0:
                 price = 1.00
-            inventory.add_product(Product(item["id"], item["name"], price, stock))
+            inventory.add_product(create_product_from_dict(item, price, stock))
         except (KeyError, TypeError, ValueError) as error:
             print(f"Skipping invalid record {item}: {error}")
 
@@ -65,8 +81,28 @@ def save_inventory(inventory, filename=FILENAME):
 
 #menu actions (user input stays here, not in the classes)
 
+def prompt_positive_float(prompt, label):
+    #keeps asking until a number greater than zero is entered
+    while True:
+        try:
+            value = float(input(prompt))
+        except ValueError:
+            print(f"Error: Invalid {label}. Please enter a valid decimal number.")
+            continue
+        if value <= 0:
+            print(f"Error: {label.capitalize()} must be a positive number greater than zero!")
+            continue
+        return value
+
+
 def add_product(inventory):
     print("\nAdd New Product")
+
+    while True:
+        product_type = input("Product Type (1 = Physical, 2 = Digital): ").strip()
+        if product_type in ("1", "2"):
+            break
+        print("Error: Please enter 1 for Physical or 2 for Digital.")
 
     while True:
         product_id = input("Product ID: ").strip()
@@ -105,8 +141,15 @@ def add_product(inventory):
             continue
         break
 
+    #extra detail depends on the product type
     try:
-        inventory.add_product(Product(product_id, name, price, stock))
+        if product_type == "1":
+            weight = prompt_positive_float("Weight (kg): ", "weight")
+            product = PhysicalProduct(product_id, name, price, stock, weight)
+        else:
+            download_size = prompt_positive_float("Download Size (MB): ", "download size")
+            product = DigitalProduct(product_id, name, price, stock, download_size)
+        inventory.add_product(product)
         print("\nProduct added successfully!")
     except ValueError as error:
         print(f"\nError: {error}")
@@ -151,6 +194,10 @@ def search_product(inventory):
     print("\nProduct Found")
     print("----------------------------------------")
     product.display_information()
+    print(product.get_fulfilment_info())
+    #only products that sign the CanBeShipped contract have a shipping cost
+    if isinstance(product, CanBeShipped):
+        print(f"Shipping Cost: ${product.calculate_shipping_cost():.2f}")
     print("----------------------------------------")
 
 

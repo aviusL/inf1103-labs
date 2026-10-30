@@ -1,38 +1,58 @@
 [
     {
+        "type": "physical",
         "id": "P001",
         "name": "Laptop",
         "price": 1200.0,
-        "stock": 1000
+        "stock": 1000,
+        "weight": 2.0
     },
     {
+        "type": "physical",
         "id": "P002",
         "name": "Mouse",
         "price": 25.5,
-        "stock": 60
+        "stock": 60,
+        "weight": 0.1
     },
     {
+        "type": "physical",
         "id": "P003",
         "name": "Keyboard",
         "price": 45.0,
-        "stock": 25
+        "stock": 25,
+        "weight": 0.8
     },
     {
+        "type": "physical",
         "id": "P100",
         "name": "Monitor",
         "price": 250.0,
-        "stock": 100
+        "stock": 100,
+        "weight": 5.0
     },
     {
+        "type": "physical",
         "id": "P200",
         "name": "Table",
         "price": 500.0,
-        "stock": 100
+        "stock": 100,
+        "weight": 25.0
     },
     {
+        "type": "physical",
         "id": "P004",
         "name": "Monitor",
         "price": 299.99,
-        "stock": 10
+        "stock": 10,
+        "weight": 4.5
+    },
+    {
+        "type": "digital",
+        "id": "P300",
+        "name": "Photo Editor",
+        "price": 89.9,
+        "stock": 200,
+        "download_size": 1250.0
     }
 ]

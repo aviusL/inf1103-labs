@@ -1,7 +1,9 @@
 from product import Product
+from can_be_shipped import CanBeShipped
 
 
 class DigitalProduct(Product):
+    #inherits from Product only, does NOT implement CanBeShipped
 
     def __init__(self, product_id, name, price, stock, download_size):
         """initialise a DigitalProduct, reusing the Product constructor.
@@ -40,12 +42,19 @@ class DigitalProduct(Product):
         #list products
         return f"{super().__str__()} | Download Size: {self.__download_size:.2f} MB"
 
+    # abstract method from Product
+
+    def get_fulfilment_info(self):
+        return "Digital product: delivered by download, no shipping required."
+
 
 if __name__ == "__main__":
     os_product = DigitalProduct("P020", "Operating System", 199.00, 100, 4500)
     print(os_product)
     os_product.display_information()
     print(f"Operating System is-a Product: {isinstance(os_product, Product)}")
+    print(f"Operating System can-be-shipped: {isinstance(os_product, CanBeShipped)}")
+    print(os_product.get_fulfilment_info())
     print(os_product.to_dict())
 
     try:

@@ -1,5 +1,7 @@
+from abc import ABC, abstractmethod
 
-class Product:
+
+class Product(ABC):
 
     def __init__(self, product_id, name, price, stock):
         """initialise a Product and validate every value before storing it.
@@ -77,19 +79,17 @@ class Product:
         return (f"ID: {self.__product_id} | Name: {self.__name} | "
                 f"Price: ${self.__price:.2f} | Stock: {self.__stock}")
 
+    # abstract (every subclass must implement)
+
+    @abstractmethod
+    def get_fulfilment_info(self):
+        #how the product reaches the customer, no implementation here
+        pass
+
 
 if __name__ == "__main__":
-    laptop = Product("P001", "Laptop", 1200.00, 15)
-    print(laptop)
-
-    laptop.update_stock(20)
-    laptop.display_information()
-
+    #abstract: a plain Product cannot be created directly
     try:
-        laptop.update_stock(-5)
-    except ValueError as error:
-        print(f"Rejected update_stock(-5): {error}")
-
-    # Encapsulation:
-    laptop.__stock = 999
-    print(f"After 'laptop.__stock = 999', get_stock() still returns {laptop.get_stock()}")
+        Product("P001", "Laptop", 1200.00, 15)
+    except TypeError as error:
+        print(f"Rejected Product(...): {error}")

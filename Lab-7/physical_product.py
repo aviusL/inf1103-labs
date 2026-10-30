@@ -1,7 +1,12 @@
 from product import Product
+from can_be_shipped import CanBeShipped
 
 
-class PhysicalProduct(Product):
+class PhysicalProduct(Product, CanBeShipped):
+    #inherits from Product (is-a), implements the CanBeShipped interface (can-be)
+
+    BASE_SHIPPING_FEE = 5.00
+    SHIPPING_RATE_PER_KG = 2.00
 
     def __init__(self, product_id, name, price, stock, weight):
         """initialise a PhysicalProduct, reusing the Product constructor.
@@ -40,6 +45,17 @@ class PhysicalProduct(Product):
         #list products
         return f"{super().__str__()} | Weight: {self.__weight:.2f} kg"
 
+    # abstract method from Product
+
+    def get_fulfilment_info(self):
+        return "Physical product: requires physical shipping to the customer."
+
+    # interface method from CanBeShipped
+
+    def calculate_shipping_cost(self):
+        #flat base fee plus a rate per kg
+        return self.BASE_SHIPPING_FEE + self.SHIPPING_RATE_PER_KG * self.__weight
+
 
 if __name__ == "__main__":
     guitar = PhysicalProduct("P010", "Guitar", 350.00, 5, 3.5)
@@ -50,7 +66,14 @@ if __name__ == "__main__":
     guitar.update_stock(8)
     print(f"Stock after update_stock(8): {guitar.get_stock()}")
     print(f"Guitar is-a Product: {isinstance(guitar, Product)}")
+    print(f"Guitar can-be-shipped: {isinstance(guitar, CanBeShipped)}")
+    print(guitar.get_fulfilment_info())
     print(guitar.to_dict())
+
+    #shipping cost for different weights
+    for weight in (0.5, 3.5, 20):
+        item = PhysicalProduct("P012", "Test Item", 10.00, 1, weight)
+        print(f"Shipping for {weight} kg: ${item.calculate_shipping_cost():.2f}")
 
     try:
         PhysicalProduct("P011", "Feather", 1.00, 1, 0)
