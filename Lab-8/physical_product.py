@@ -6,8 +6,8 @@ from can_be_shipped import CanBeShipped
 class PhysicalProduct(Product, CanBeShipped):
     #inherits from Product (is-a), implements the CanBeShipped interface (can-be)
 
-    BASE_SHIPPING_FEE = 5.00
-    SHIPPING_RATE_PER_KG = 2.00
+    BASE_SHIPPING_FEE: float = 5.00
+    SHIPPING_RATE_PER_KG: float = 2.00
 
     def __init__(self, product_id: str, name: str, price: float, stock: int,
                  supplier: Supplier, weight: float) -> None:
@@ -17,12 +17,12 @@ class PhysicalProduct(Product, CanBeShipped):
         """
         #the Supplier is passed up, Product stores the reference
         super().__init__(product_id, name, price, stock, supplier)
-        self.__weight = self.__validate_weight(weight)
+        self.__weight: float = self.__validate_weight(weight)
 
     # private
 
     @staticmethod
-    def __validate_weight(weight):
+    def __validate_weight(weight: float) -> float:
         weight = float(weight)
         if weight <= 0:
             raise ValueError("Weight must be greater than zero.")
@@ -30,32 +30,32 @@ class PhysicalProduct(Product, CanBeShipped):
 
     # getters
 
-    def get_weight(self):
+    def get_weight(self) -> float:
         return self.__weight
 
     # public (overrides Product)
 
-    def display_information(self):
+    def display_information(self) -> None:
         #parent prints the common details, child adds weight
         super().display_information()
         print(f"Weight: {self.__weight:.2f} kg")
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str | float | int]:
         #parent dict plus product type and weight
         return {"type": "physical", **super().to_dict(), "weight": self.__weight}
 
-    def __str__(self):
+    def __str__(self) -> str:
         #list products
         return f"{super().__str__()} | Weight: {self.__weight:.2f} kg"
 
     # abstract method from Product
 
-    def get_fulfilment_info(self):
+    def get_fulfilment_info(self) -> str:
         return "Physical product: requires physical shipping to the customer."
 
     # interface method from CanBeShipped
 
-    def calculate_shipping_cost(self):
+    def calculate_shipping_cost(self) -> float:
         #flat base fee plus a rate per kg
         return self.BASE_SHIPPING_FEE + self.SHIPPING_RATE_PER_KG * self.__weight
 

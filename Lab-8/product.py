@@ -23,23 +23,23 @@ class Product(ABC):
         if not name:
             raise ValueError("Product name cannot be empty.")
 
-        self.__product_id = product_id
-        self.__name = name
-        self.__price = self.__validate_price(price)
-        self.__stock = self.__validate_stock(stock)
+        self.__product_id: str = product_id
+        self.__name: str = name
+        self.__price: float = self.__validate_price(price)
+        self.__stock: int = self.__validate_stock(stock)
         self.__supplier: Supplier = self.__validate_supplier(supplier)
 
     # private
 
     @staticmethod
-    def __validate_price(price):
+    def __validate_price(price: float) -> float:
         price = float(price)
         if price <= 0:
             raise ValueError("Price must be greater than zero.")
         return price
 
     @staticmethod
-    def __validate_stock(stock):
+    def __validate_stock(stock: int) -> int:
         if isinstance(stock, bool) or not isinstance(stock, int):
             raise ValueError("Stock quantity must be a whole number.")
         if stock < 0:
@@ -55,16 +55,16 @@ class Product(ABC):
 
     # getters
 
-    def get_product_id(self):
+    def get_product_id(self) -> str:
         return self.__product_id
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.__name
 
-    def get_price(self):
+    def get_price(self) -> float:
         return self.__price
 
-    def get_stock(self):
+    def get_stock(self) -> int:
         return self.__stock
 
     def get_supplier(self) -> Supplier:
@@ -72,12 +72,17 @@ class Product(ABC):
 
     # public
 
-    def update_stock(self, quantity):
-        #set the stock level to a new quantity.
+    def update_stock(self, quantity: int) -> None:
+        """set the stock level to a new quantity.
+
+        contract every subclass keeps (LSP): any whole number >= 0 is accepted
+        and becomes the new stock level, anything else raises ValueError.
+        for a DigitalProduct the stock is the number of licences available.
+        """
 
         self.__stock = self.__validate_stock(quantity)
 
-    def display_information(self):
+    def display_information(self) -> None:
         #print product details
         print(f"ID: {self.__product_id}")
         print(f"Name: {self.__name}")
@@ -89,7 +94,7 @@ class Product(ABC):
         #the supplier prints its own details, the Product only passes the request on
         self.__supplier.display_information()
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str | float | int]:
         #only the supplier ID is saved, the supplier itself is saved separately
         return {
             "id": self.__product_id,
@@ -99,7 +104,7 @@ class Product(ABC):
             "supplier_id": self.__supplier.get_supplier_id(),
         }
 
-    def __str__(self):
+    def __str__(self) -> str:
         #list products
         return (f"ID: {self.__product_id} | Name: {self.__name} | "
                 f"Price: ${self.__price:.2f} | Stock: {self.__stock}")
@@ -107,8 +112,8 @@ class Product(ABC):
     # abstract (every subclass must implement)
 
     @abstractmethod
-    def get_fulfilment_info(self):
-        #how the product reaches the customer, no implementation here
+    def get_fulfilment_info(self) -> str:
+        #how the product reaches the customer, every subclass returns a description
         pass
 
 

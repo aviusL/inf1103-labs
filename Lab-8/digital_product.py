@@ -14,12 +14,12 @@ class DigitalProduct(Product):
         """
         #the Supplier is passed up, Product stores the reference
         super().__init__(product_id, name, price, stock, supplier)
-        self.__download_size = self.__validate_download_size(download_size)
+        self.__download_size: float = self.__validate_download_size(download_size)
 
     # private
 
     @staticmethod
-    def __validate_download_size(download_size):
+    def __validate_download_size(download_size: float) -> float:
         download_size = float(download_size)
         if download_size <= 0:
             raise ValueError("Download size must be greater than zero.")
@@ -27,27 +27,27 @@ class DigitalProduct(Product):
 
     # getters
 
-    def get_download_size(self):
+    def get_download_size(self) -> float:
         return self.__download_size
 
     # public (overrides Product)
 
-    def display_information(self):
+    def display_information(self) -> None:
         #parent prints the common details, child adds download size
         super().display_information()
         print(f"Download Size: {self.__download_size:.2f} MB")
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, str | float | int]:
         #parent dict plus product type and download size
         return {"type": "digital", **super().to_dict(), "download_size": self.__download_size}
 
-    def __str__(self):
+    def __str__(self) -> str:
         #list products
         return f"{super().__str__()} | Download Size: {self.__download_size:.2f} MB"
 
     # abstract method from Product
 
-    def get_fulfilment_info(self):
+    def get_fulfilment_info(self) -> str:
         return "Digital product: delivered by download, no shipping required."
 
 

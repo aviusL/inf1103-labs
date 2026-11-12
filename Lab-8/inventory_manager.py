@@ -5,6 +5,8 @@ from physical_product import PhysicalProduct
 from digital_product import DigitalProduct
 from can_be_shipped import CanBeShipped
 from inventory import Inventory
+from order import Order
+from product import Product
 from supplier import Supplier
 
 #inventory.json and suppliers.json live next to this script
@@ -100,7 +102,8 @@ def create_default_inventory(suppliers: dict[str, Supplier]) -> Inventory:
     return inventory
 
 
-def create_product_from_dict(item, price, stock, suppliers: dict[str, Supplier]):
+def create_product_from_dict(item: dict, price: float, stock: int,
+                             suppliers: dict[str, Supplier]) -> Product:
     #uses the saved "type" to rebuild the right subclass, records without a type load as physical
     #the saved "supplier_id" is turned back into a reference to the existing Supplier object
     product_type = item.get("type", "physical")
@@ -114,7 +117,7 @@ def create_product_from_dict(item, price, stock, suppliers: dict[str, Supplier])
     raise ValueError(f"Unknown product type '{product_type}'.")
 
 
-def load_inventory(suppliers: dict[str, Supplier], filename=FILENAME):
+def load_inventory(suppliers: dict[str, Supplier], filename: str = FILENAME) -> Inventory:
     #builds an inventory of product objects from inventory.json, defaults if missing/corrupt
     if not os.path.exists(filename):
         print(f"{os.path.basename(filename)} not found.")
@@ -147,7 +150,7 @@ def load_inventory(suppliers: dict[str, Supplier], filename=FILENAME):
     return inventory
 
 
-def save_inventory(inventory, filename=FILENAME):
+def save_inventory(inventory: Inventory, filename: str = FILENAME) -> bool:
     try:
         data = [product.to_dict() for product in inventory.get_products()]
         with open(filename, "w") as file:
@@ -160,7 +163,7 @@ def save_inventory(inventory, filename=FILENAME):
 
 #menu actions (user input stays here, not in the classes)
 
-def prompt_positive_float(prompt, label):
+def prompt_positive_float(prompt: str, label: str) -> float:
     #keeps asking until a number greater than zero is entered
     while True:
         try:
@@ -225,7 +228,7 @@ def choose_supplier(suppliers: dict[str, Supplier]) -> Supplier:
         print("Error: Supplier not found! Enter an ID from the list, or N.")
 
 
-def add_product(inventory, suppliers: dict[str, Supplier]):
+def add_product(inventory: Inventory, suppliers: dict[str, Supplier]) -> None:
     print("\nAdd New Product")
 
     while True:
@@ -238,7 +241,7 @@ def add_product(inventory, suppliers: dict[str, Supplier]):
         product_id = input("Product ID: ").strip()
         if not product_id:
             print("Error: Product ID cannot be empty! Please try again.")
-        elif inventory.search_product(product_id) is not None:
+        elif inventory.find_product(product_id) is not None:
             print("Error: Product ID already exists! Please enter a unique ID.")
         else:
             break
@@ -288,9 +291,9 @@ def add_product(inventory, suppliers: dict[str, Supplier]):
         print(f"\nError: {error}")
 
 
-def update_stock(inventory):
+def update_stock(inventory: Inventory) -> None:
     print("\nUpdate Stock")
-    product = inventory.search_product(input("Enter Product ID: "))
+    product = inventory.find_product(input("Enter Product ID: "))
 
     if product is None:
         print("\nProduct not found.")
@@ -316,9 +319,9 @@ def update_stock(inventory):
         return
 
 
-def search_product(inventory):
+def search_product(inventory: Inventory) -> None:
     print("\nSearch Product")
-    product = inventory.search_product(input("Enter Product ID: "))
+    product = inventory.find_product(input("Enter Product ID: "))
 
     if product is None:
         print("\nProduct not found.")
@@ -337,18 +340,95 @@ def search_product(inventory):
     print("----------------------------------------")
 
 
-def print_menu():
+def remove_product(inventory: Inventory) -> None:
+    print("\nRemove Product")
+    product = inventory.find_product(input("Enter Product ID: "))
+
+    if product is None:
+        print("\nProduct not found.")
+        return
+
+    print(f"\n{product}")
+    if input("Remove this product from the inventory? (y/n): ").strip().lower() != "y":
+        print("Remove cancelled.")
+        return
+
+    #the inventory only lets go of its reference, the Product object is not destroyed
+    inventory.remove_product(product.get_product_id())
+    print("\nProduct removed from the inventory.")
+
+
+def prompt_order_quantity(product: Product) -> int:
+    #keeps asking until a whole number from 1 up to the available stock is entered
+    while True:
+        try:
+            quantity = int(input(f"Quantity (1-{product.get_stock()}): "))
+        except ValueError:
+            print("Error: Quantity must be a whole number.")
+            continue
+        if quantity <= 0:
+            print("Error: Quantity must be greater than zero!")
+        elif quantity > product.get_stock():
+            print(f"Error: Only {product.get_stock()} in stock.")
+        else:
+            return quantity
+
+
+def create_order(inventory: Inventory, order_number: int) -> None:
+    order = Order(f"ORD{order_number:03d}")
+    print(f"\nCreate Order {order.get_order_id()}")
+    print("Enter a Product ID to add it, or press Enter when done.")
+
+    while True:
+        product_id = input("\nProduct ID: ").strip()
+        if not product_id:
+            break
+        product = inventory.find_product(product_id)
+        if product is None:
+            print("Error: Product not found!")
+            continue
+        if order.has_product(product_id):
+            print("Error: Product is already in this order!")
+            continue
+        if product.get_stock() == 0:
+            print("Error: Product is out of stock!")
+            continue
+        print(f"{product.get_name()} - ${product.get_price():.2f}")
+        #the Order creates the OrderLine itself, only the Product and quantity are passed in
+        order.add_order_line(product, prompt_order_quantity(product))
+
+    if not order.get_order_lines():
+        print("\nNo products added. Order discarded.")
+        return
+
+    order.display_order()
+    if input("\nPlace this order? (y/n): ").strip().lower() != "y":
+        #cancelling the order discards its lines with it
+        order.cancel()
+        print("Order cancelled.")
+        return
+
+    #same update_stock() call for every kind of Product (LSP)
+    for order_line in order.get_order_lines():
+        product = order_line.get_product()
+        product.update_stock(product.get_stock() - order_line.get_quantity())
+    print(f"\nOrder {order.get_order_id()} placed. Stock updated.")
+
+
+def print_menu() -> None:
     print("\n---------- MENU ----------")
     print("1. Display All Products")
     print("2. Add Product")
     print("3. Update Stock")
     print("4. Search Product")
-    print("5. Save Inventory")
-    print("6. Exit")
+    print("5. Remove Product")
+    print("6. Create Order")
+    print("7. Save Inventory")
+    print("8. Exit")
     print("--------------------------")
 
 
-def main():
+def main() -> None:
     print("========================================")
     print("INVENTORY MANAGEMENT SYSTEM")
     print("========================================")
@@ -357,6 +437,8 @@ def main():
     #suppliers are loaded first so each product can be linked to its Supplier
     suppliers = load_suppliers()
     inventory = load_inventory(suppliers)
+    #orders are not saved, numbering restarts each run
+    order_number = 1
 
     while True:
         print_menu()
@@ -371,10 +453,15 @@ def main():
         elif choice == "4":
             search_product(inventory)
         elif choice == "5":
+            remove_product(inventory)
+        elif choice == "6":
+            create_order(inventory, order_number)
+            order_number += 1
+        elif choice == "7":
             print("\nSaving inventory...")
             if save_suppliers(suppliers) and save_inventory(inventory):
                 print(f"Inventory saved successfully to {os.path.basename(FILENAME)}.")
-        elif choice == "6":
+        elif choice == "8":
             print("\nSaving inventory before exit...")
             if save_suppliers(suppliers) and save_inventory(inventory):
                 print("Inventory saved successfully.")
@@ -382,7 +469,7 @@ def main():
             print("Program terminated.")
             break
         else:
-            print("Invalid option! Please enter a number from 1 to 6.")
+            print("Invalid option! Please enter a number from 1 to 8.")
 
 
 if __name__ == "__main__":
