@@ -1,0 +1,12 @@
+[
+    {
+        "id": "S001",
+        "name": "TechSource Pte Ltd",
+        "contact_email": "sales@techsource.example"
+    },
+    {
+        "id": "S002",
+        "name": "SoftWorks",
+        "contact_email": "licensing@softworks.example"
+    }
+]
