@@ -1,5 +1,5 @@
 #lab 8 section 4: composition between Order and OrderLine
-#run with: python test_composition.py
+#run on its own from the Lab-9 folder with: python -m tests.test_composition
 
 from supplier import Supplier
 from order import Order

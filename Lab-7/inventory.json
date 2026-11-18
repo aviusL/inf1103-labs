@@ -54,5 +54,21 @@
         "price": 89.9,
         "stock": 200,
         "download_size": 1250.0
+    },
+    {
+        "type": "physical",
+        "id": "P500",
+        "name": "Drumset",
+        "price": 899.0,
+        "stock": 2,
+        "weight": 30.0
+    },
+    {
+        "type": "digital",
+        "id": "P600",
+        "name": "Music Pack",
+        "price": 19.99,
+        "stock": 450,
+        "download_size": 850.5
     }
 ]

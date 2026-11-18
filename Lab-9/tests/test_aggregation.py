@@ -1,5 +1,5 @@
 #lab 8 section 3: aggregation between Inventory and Product
-#run with: python test_aggregation.py
+#run on its own from the Lab-9 folder with: python -m tests.test_aggregation
 
 from supplier import Supplier
 from inventory import Inventory

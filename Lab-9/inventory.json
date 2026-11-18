@@ -61,5 +61,14 @@
         "stock": 200,
         "supplier_id": "S002",
         "download_size": 1250.0
+    },
+    {
+        "type": "digital",
+        "id": "D001",
+        "name": "laptop",
+        "price": 3213.0,
+        "stock": 0,
+        "supplier_id": "S001",
+        "download_size": 32.0
     }
 ]

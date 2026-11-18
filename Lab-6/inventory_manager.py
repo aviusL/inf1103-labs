@@ -4,12 +4,12 @@ import os
 from product import Product
 from inventory import Inventory
 
-# inventory.json lives next to this script
+#inventory.json lives next to this script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FILENAME = os.path.join(BASE_DIR, "inventory.json")
 
 
-# file handling
+#file handling
 
 def create_default_inventory():
     inventory = Inventory()
@@ -20,7 +20,7 @@ def create_default_inventory():
 
 
 def load_inventory(filename=FILENAME):
-    # builds an Inventory of Product objects from inventory.json, or defaults if missing/corrupt
+    #builds an inventory of product objects from inventory.json, defaults if missing/corrupt
     if not os.path.exists(filename):
         print(f"{os.path.basename(filename)} not found.")
         print("Starting with default inventory.")
@@ -36,7 +36,7 @@ def load_inventory(filename=FILENAME):
     inventory = Inventory()
     for item in data:
         try:
-            # sanitize bad values carried over from older files
+            #sanitize bad values carried over from older files
             stock = item.get("stock", 0)
             price = item.get("price", 0)
             if isinstance(stock, int) and stock < 0:
@@ -63,7 +63,7 @@ def save_inventory(inventory, filename=FILENAME):
         return False
 
 
-# menu actions (user input stays here, not in the classes)
+#menu actions (user input stays here, not in the classes)
 
 def add_product(inventory):
     print("\nAdd New Product")
@@ -131,7 +131,7 @@ def update_stock(inventory):
             print("Error: Stock quantity must be a valid whole non-negative integer!")
             continue
         try:
-            # Product validates and changes its own stock
+            #product validates and changes its own stock
             product.update_stock(new_stock)
         except ValueError as error:
             print(f"Error: {error} Please try again.")

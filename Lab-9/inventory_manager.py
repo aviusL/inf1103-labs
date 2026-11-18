@@ -1,24 +1,34 @@
 import json
 import os
 
-from physical_product import PhysicalProduct
-from digital_product import DigitalProduct
 from can_be_shipped import CanBeShipped
+from input_helpers import get_positive_float
 from inventory import Inventory
 from order import Order
+from discount_strategy import BulkDiscount, DiscountStrategy, NoDiscount, PercentageDiscount
+from student_discount import StudentDiscount
 from product import Product
+from product_factory import ProductFactory
+from product_loader import load_products
 from supplier import Supplier
 
 #inventory.json and suppliers.json live next to this script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FILENAME = os.path.join(BASE_DIR, "inventory.json")
 SUPPLIERS_FILENAME = os.path.join(BASE_DIR, "suppliers.json")
-
-#weight given to older records that were saved before product types existed
-DEFAULT_WEIGHT = 1.0
+PRODUCTS_CSV = os.path.join(BASE_DIR, "products.csv")
 
 #supplier given to older records that were saved before suppliers existed
 UNASSIGNED_SUPPLIER_ID = "S000"
+
+#the discounts the business currently offers, one shared object each.
+#a new discount is a new DiscountStrategy class plus one line here; Order does not change
+DISCOUNTS: dict[str, DiscountStrategy] = {
+    "1": NoDiscount(),
+    "2": PercentageDiscount(10),
+    "3": BulkDiscount(200, 20),
+    "4": StudentDiscount(),
+}
 
 
 #suppliers (created and kept here, products only hold a reference to one)
@@ -94,27 +104,24 @@ def create_default_inventory(suppliers: dict[str, Supplier]) -> Inventory:
     hardware = resolve_supplier(suppliers, "S001")
     software = resolve_supplier(suppliers, "S002")
 
+    #every product is built by the factory, this code never names a Product subclass
     inventory = Inventory()
-    inventory.add_product(PhysicalProduct("P001", "Laptop", 1200.00, 15, hardware, 2.0))
-    inventory.add_product(PhysicalProduct("P002", "Mouse", 25.50, 40, hardware, 0.1))
-    inventory.add_product(PhysicalProduct("P003", "Keyboard", 45.00, 25, hardware, 0.8))
-    inventory.add_product(DigitalProduct("P004", "Photo Editor", 89.90, 200, software, 1250.0))
+    inventory.add_product(ProductFactory.create("physical", "P001", "Laptop", 1200.00, 15, hardware, weight=2.0))
+    inventory.add_product(ProductFactory.create("physical", "P002", "Mouse", 25.50, 40, hardware, weight=0.1))
+    inventory.add_product(ProductFactory.create("physical", "P003", "Keyboard", 45.00, 25, hardware, weight=0.8))
+    inventory.add_product(ProductFactory.create("digital", "P004", "Photo Editor", 89.90, 200, software,
+                                                download_size=1250.0))
     return inventory
 
 
 def create_product_from_dict(item: dict, price: float, stock: int,
                              suppliers: dict[str, Supplier]) -> Product:
-    #uses the saved "type" to rebuild the right subclass, records without a type load as physical
+    #the saved "type" goes to the factory, which picks the subclass (records without one load as physical)
     #the saved "supplier_id" is turned back into a reference to the existing Supplier object
-    product_type = item.get("type", "physical")
     supplier = resolve_supplier(suppliers, item.get("supplier_id"))
-    if product_type == "physical":
-        return PhysicalProduct(item["id"], item["name"], price, stock, supplier,
-                               item.get("weight", DEFAULT_WEIGHT))
-    if product_type == "digital":
-        return DigitalProduct(item["id"], item["name"], price, stock, supplier,
-                              item["download_size"])
-    raise ValueError(f"Unknown product type '{product_type}'.")
+    return ProductFactory.create(item.get("type", "physical"), item["id"], item["name"], price, stock,
+                                 supplier, weight=item.get("weight"),
+                                 download_size=item.get("download_size"))
 
 
 def load_inventory(suppliers: dict[str, Supplier], filename: str = FILENAME) -> Inventory:
@@ -162,20 +169,6 @@ def save_inventory(inventory: Inventory, filename: str = FILENAME) -> bool:
 
 
 #menu actions (user input stays here, not in the classes)
-
-def prompt_positive_float(prompt: str, label: str) -> float:
-    #keeps asking until a number greater than zero is entered
-    while True:
-        try:
-            value = float(input(prompt))
-        except ValueError:
-            print(f"Error: Invalid {label}. Please enter a valid decimal number.")
-            continue
-        if value <= 0:
-            print(f"Error: {label.capitalize()} must be a positive number greater than zero!")
-            continue
-        return value
-
 
 def add_supplier(suppliers: dict[str, Supplier]) -> Supplier:
     #creates a new Supplier on its own, before any Product refers to it
@@ -252,16 +245,8 @@ def add_product(inventory: Inventory, suppliers: dict[str, Supplier]) -> None:
             break
         print("Error: Product Name cannot be empty! Please try again.")
 
-    while True:
-        try:
-            price = float(input("Price: "))
-        except ValueError:
-            print("Error: Invalid price. Please enter a valid decimal number.")
-            continue
-        if price <= 0:
-            print("Error: Price must be a positive number greater than zero!")
-            continue
-        break
+    #keeps asking until the price is a number greater than zero
+    price = get_positive_float("Price: ")
 
     while True:
         try:
@@ -277,14 +262,16 @@ def add_product(inventory: Inventory, suppliers: dict[str, Supplier]) -> None:
     #the Supplier already exists, the new Product is only given a reference to it
     supplier = choose_supplier(suppliers)
 
-    #extra detail depends on the product type
+    #extra detail depends on the product type, the factory builds the product either way
     try:
         if product_type == "1":
-            weight = prompt_positive_float("Weight (kg): ", "weight")
-            product = PhysicalProduct(product_id, name, price, stock, supplier, weight)
+            weight = get_positive_float("Weight (kg): ")
+            product = ProductFactory.create("physical", product_id, name, price, stock, supplier,
+                                            weight=weight)
         else:
-            download_size = prompt_positive_float("Download Size (MB): ", "download size")
-            product = DigitalProduct(product_id, name, price, stock, supplier, download_size)
+            download_size = get_positive_float("Download Size (MB): ")
+            product = ProductFactory.create("digital", product_id, name, price, stock, supplier,
+                                            download_size=download_size)
         inventory.add_product(product)
         print("\nProduct added successfully!")
     except ValueError as error:
@@ -374,6 +361,19 @@ def prompt_order_quantity(product: Product) -> int:
             return quantity
 
 
+def choose_discount() -> DiscountStrategy:
+    #returns the DiscountStrategy object the user picks from the list
+    print("\nDiscounts")
+    for key, discount in DISCOUNTS.items():
+        print(f"{key}. {discount}")
+
+    while True:
+        choice = input(f"Choose a discount (1-{len(DISCOUNTS)}): ").strip()
+        if choice in DISCOUNTS:
+            return DISCOUNTS[choice]
+        print(f"Error: Please enter a number from 1 to {len(DISCOUNTS)}.")
+
+
 def create_order(inventory: Inventory, order_number: int) -> None:
     order = Order(f"ORD{order_number:03d}")
     print(f"\nCreate Order {order.get_order_id()}")
@@ -401,6 +401,8 @@ def create_order(inventory: Inventory, order_number: int) -> None:
         print("\nNo products added. Order discarded.")
         return
 
+    #the order starts with NoDiscount, the chosen strategy replaces it
+    order.set_discount(choose_discount())
     order.display_order()
     if input("\nPlace this order? (y/n): ").strip().lower() != "y":
         #cancelling the order discards its lines with it
@@ -415,6 +417,16 @@ def create_order(inventory: Inventory, order_number: int) -> None:
     print(f"\nOrder {order.get_order_id()} placed. Stock updated.")
 
 
+def import_products(inventory: Inventory, suppliers: dict[str, Supplier]) -> None:
+    print("\nImport Products")
+    path = input(f"CSV file (press Enter for {os.path.basename(PRODUCTS_CSV)}): ").strip()
+    #the CSV has no supplier column, so every imported product gets the one picked here
+    supplier = choose_supplier(suppliers)
+    print()
+    #a missing file or bad rows are reported inside load_products, the menu carries on
+    load_products(path or PRODUCTS_CSV, inventory, supplier)
+
+
 def print_menu() -> None:
     print("\n---------- MENU ----------")
     print("1. Display All Products")
@@ -423,8 +435,9 @@ def print_menu() -> None:
     print("4. Search Product")
     print("5. Remove Product")
     print("6. Create Order")
-    print("7. Save Inventory")
-    print("8. Exit")
+    print("7. Import Products from CSV")
+    print("8. Save Inventory")
+    print("9. Exit")
     print("--------------------------")
 
 
@@ -458,10 +471,12 @@ def main() -> None:
             create_order(inventory, order_number)
             order_number += 1
         elif choice == "7":
+            import_products(inventory, suppliers)
+        elif choice == "8":
             print("\nSaving inventory...")
             if save_suppliers(suppliers) and save_inventory(inventory):
                 print(f"Inventory saved successfully to {os.path.basename(FILENAME)}.")
-        elif choice == "8":
+        elif choice == "9":
             print("\nSaving inventory before exit...")
             if save_suppliers(suppliers) and save_inventory(inventory):
                 print("Inventory saved successfully.")
@@ -469,8 +484,12 @@ def main() -> None:
             print("Program terminated.")
             break
         else:
-            print("Invalid option! Please enter a number from 1 to 8.")
+            print("Invalid option! Please enter a number from 1 to 9.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        #Ctrl+C, or input ended (e.g. docker run without -it): stop cleanly, no traceback
+        print("\n\nInput ended. Program terminated without saving.")

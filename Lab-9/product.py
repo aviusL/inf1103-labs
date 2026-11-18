@@ -1,3 +1,4 @@
+import math
 from abc import ABC, abstractmethod
 
 from supplier import Supplier
@@ -31,10 +32,19 @@ class Product(ABC):
 
     # private
 
+    #validation rules live here in Product, so every subclass gets the same ones (LSP)
+
     @staticmethod
     def __validate_price(price: float) -> float:
-        price = float(price)
-        if price <= 0:
+        #True/False would quietly become 1.0/0.0, so reject them outright
+        if isinstance(price, bool):
+            raise ValueError("Price must be a number.")
+        try:
+            price = float(price)
+        except (TypeError, ValueError):
+            raise ValueError("Price must be a number.") from None
+        #nan and inf are floats but not prices
+        if not math.isfinite(price) or price <= 0:
             raise ValueError("Price must be greater than zero.")
         return price
 

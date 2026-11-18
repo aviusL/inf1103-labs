@@ -1,30 +1,21 @@
-#runs every lab 8 test in order and stops at the first failure
-#run with: python run_tests.py
+#runs every test in the tests folder with one command, the way a CI pipeline would.
+#exits with code 1 if any test fails, so a pipeline (or Docker) can see the failure.
+#run from the Lab-9 folder with: python run_tests.py
+#same as: python -m unittest discover -s tests -t . -v
 
-import test_association
-import test_aggregation
-import test_composition
-import test_lsp_polymorphism
+import os
+import sys
+import unittest
 
-TESTS = [
-    ("Section 2 - Association", test_association),
-    ("Section 3 - Aggregation", test_aggregation),
-    ("Section 4 - Composition", test_composition),
-    ("Sections 6 and 7 - LSP and Polymorphism", test_lsp_polymorphism),
-]
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def main() -> None:
-    for title, module in TESTS:
-        print("\n" + "=" * 50)
-        print(title)
-        print("=" * 50)
-        module.main()
-
-    print("\n" + "=" * 50)
-    print(f"All {len(TESTS)} test files passed.")
-    print("=" * 50)
+def main() -> int:
+    suite = unittest.defaultTestLoader.discover(os.path.join(BASE_DIR, "tests"),
+                                                top_level_dir=BASE_DIR)
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
+    return 0 if result.wasSuccessful() else 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -1,5 +1,5 @@
 #lab 8 section 2: association between Supplier and Product
-#run with: python test_association.py
+#run on its own from the Lab-9 folder with: python -m tests.test_association
 
 from supplier import Supplier
 from product import Product

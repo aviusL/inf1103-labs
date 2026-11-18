@@ -1,5 +1,5 @@
 #lab 8 sections 6 and 7: Liskov Substitution and polymorphism through Product
-#run with: python test_lsp_polymorphism.py
+#run on its own from the Lab-9 folder with: python -m tests.test_lsp_polymorphism
 
 from supplier import Supplier
 from product import Product
